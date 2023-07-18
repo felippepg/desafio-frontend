@@ -17,6 +17,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import { formatarDataFinal, formatarDataInicio } from './services/formatarData';
 import { buscaTodasTransacoesPorPeriodo } from './services/buscarTransacoesPorPeriodo';
+import { buscaTodasTransacoesPorNome } from './services/buscarTransacoesPorNome';
 
 dayjs.locale('pt-br');
 
@@ -127,10 +128,7 @@ function App({ children }) {
     if (nome.trim().length > 3) {
       if (dataInicio == null && dataFinal == null) {
         setFiltros({ filtro: true, tipo: 'nome' });
-        const response = await api.get(
-          `/transacao/nome-operador?nome-operador=${nome}`
-        );
-        setTransacoes(response.data);
+        setTransacoes(await buscaTodasTransacoesPorNome(nome));
       }
       if (dataInicio !== null && dataFinal !== null) {
         if (dataInicio < dataFinal) {
