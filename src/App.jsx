@@ -22,6 +22,9 @@ dayjs.locale('pt-br');
 function App({ children }) {
   const [transacoes, setTransacoes] = useState();
   const [page, setPage] = useState(0);
+  const [dataInicio, setDataInicio] = useState(null);
+  const [dataFinal, setDataFinal] = useState(null);
+  const [nome, setNome] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -61,15 +64,68 @@ function App({ children }) {
     }
   }
 
+  async function handleSubmit() {
+    if (dataInicio === null && dataFinal === null && nome.trim() === '') {
+      if (transacoes == undefined || transacoes.content.length === 0) {
+        const response = await api.get(`/transacao`);
+        setTransacoes(response.data);
+      }
+    }
+
+    const formatoDesejado = 'YYYY-MM-DD';
+    const dataInicioFormatada = dayjs(dataInicio).format(formatoDesejado);
+    const dataFinalFormatada = dayjs(dataFinal).format(formatoDesejado);
+
+    if (dataInicio !== null && dataFinal !== null) {
+      if (dataFinal < dataInicio) {
+        console.log('Data final é menor que a data inicial');
+      } else {
+        const response = await api.get(
+          `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}`
+        );
+        setTransacoes(response.data);
+      }
+    }
+
+    if (nome.trim() > 3) {
+      console.log(dataInicio);
+      if (dataInicio == null && dataFinal == null) {
+        const response = await api.get(
+          `/transacao/nome-operador?nome-operador=${nome}`
+        );
+        setTransacoes(response.data);
+      }
+      if (dataInicio !== null && dataFinal !== null) {
+        if (dataInicio < dataFinal) {
+          const response = await api.get(
+            `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&operador=${nome}`
+          );
+          setTransacoes(response.data);
+        }
+      }
+    }
+  }
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       {children}
       <div className="flex flex-col items-center justify-center h-screen w-screen">
         <div className="bg-white flex flex-col w-3/4 h-3/4">
           <div className="flex flex-col justify-between p-4 md:flex-row">
-            <StyledDatePicker locale="pt-BR" label="Data de inicio" />
-            <StyledDatePicker locale="pt-BR" label="Data final" />
+            <StyledDatePicker
+              locale="pt-BR"
+              label="Data de inicio"
+              value={dataInicio}
+              onChange={(newValue) => setDataInicio(newValue)}
+            />
+            <StyledDatePicker
+              locale="pt-BR"
+              label="Data final"
+              value={dataFinal}
+              onChange={(newValue) => setDataFinal(newValue)}
+            />
             <TextField
+              onChange={(event) => setNome(event.target.value)}
               InputProps={{
                 className: 'lg:w-80', // Defina a altura desejada aqui, como 'h-12'
               }}
@@ -81,6 +137,7 @@ function App({ children }) {
               className="bg-red-500 w-3/5 md:w-1/5 mt-2 mb-2 p-1 rounded text-white"
               type="button"
               value="Pesquisar"
+              onClick={() => handleSubmit()}
             />
           </div>
 
@@ -92,31 +149,40 @@ function App({ children }) {
             </div>
           ) : (
             <div className="w-full h-full p-4">
-              <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white text-xs md:text-sm">
-                <span>Saldo Total: R$ {transacoes.content[0].saldoTotal}</span>
-                <span>
-                  Saldo no período $R$ {transacoes.content[0].saldoTotalPeriodo}
-                </span>
-              </div>
-              <BasicTable transacoes={transacoes} />
-              <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white">
-                <FirstPageIcon
-                  className="cursor-pointer"
-                  onClick={() => handleFirstPage()}
-                />
-                <KeyboardArrowLeft
-                  className="cursor-pointer"
-                  onClick={() => prevPage()}
-                />
-                <KeyboardArrowRight
-                  className="cursor-pointer"
-                  onClick={() => nextPage()}
-                />
-                <LastPageIcon
-                  className="cursor-pointer"
-                  onClick={() => handleLastPage()}
-                />
-              </div>
+              {transacoes.content.length <= 0 ? (
+                'Não há registros'
+              ) : (
+                <>
+                  <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white text-xs md:text-sm">
+                    <span>
+                      Saldo Total: R$ {transacoes.content[0]?.saldoTotal}
+                    </span>
+                    <span>
+                      Saldo no período $R${' '}
+                      {transacoes.content[0]?.saldoTotalPeriodo}
+                    </span>
+                  </div>
+                  <BasicTable transacoes={transacoes} />
+                  <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white">
+                    <FirstPageIcon
+                      className="cursor-pointer"
+                      onClick={() => handleFirstPage()}
+                    />
+                    <KeyboardArrowLeft
+                      className="cursor-pointer"
+                      onClick={() => prevPage()}
+                    />
+                    <KeyboardArrowRight
+                      className="cursor-pointer"
+                      onClick={() => nextPage()}
+                    />
+                    <LastPageIcon
+                      className="cursor-pointer"
+                      onClick={() => handleLastPage()}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
