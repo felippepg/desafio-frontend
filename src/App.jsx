@@ -15,6 +15,7 @@ import BasicTable from './components/Table';
 import { api } from './services/api';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
+import { formatarDataFinal, formatarDataInicio } from './services/formatarData';
 
 dayjs.locale('pt-br');
 
@@ -72,9 +73,8 @@ function App({ children }) {
       }
     }
 
-    const formatoDesejado = 'YYYY-MM-DD';
-    const dataInicioFormatada = dayjs(dataInicio).format(formatoDesejado);
-    const dataFinalFormatada = dayjs(dataFinal).format(formatoDesejado);
+    const dataInicioFormatada = formatarDataInicio(dataInicio);
+    const dataFinalFormatada = formatarDataFinal(dataFinal);
 
     if (dataInicio !== null && dataFinal !== null) {
       if (dataFinal < dataInicio) {
