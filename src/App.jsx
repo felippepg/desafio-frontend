@@ -87,8 +87,7 @@ function App({ children }) {
       }
     }
 
-    if (nome.trim() > 3) {
-      console.log(dataInicio);
+    if (nome.trim().length > 3) {
       if (dataInicio == null && dataFinal == null) {
         const response = await api.get(
           `/transacao/nome-operador?nome-operador=${nome}`
@@ -98,8 +97,9 @@ function App({ children }) {
       if (dataInicio !== null && dataFinal !== null) {
         if (dataInicio < dataFinal) {
           const response = await api.get(
-            `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&operador=${nome}`
+            `/transacao/periodo-data-operador?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&operador=${nome}`
           );
+          console.log(response.data);
           setTransacoes(response.data);
         }
       }
@@ -127,7 +127,7 @@ function App({ children }) {
             <TextField
               onChange={(event) => setNome(event.target.value)}
               InputProps={{
-                className: 'lg:w-80', // Defina a altura desejada aqui, como 'h-12'
+                className: 'lg:w-80',
               }}
             />
           </div>
@@ -150,7 +150,9 @@ function App({ children }) {
           ) : (
             <div className="w-full h-full p-4">
               {transacoes.content.length <= 0 ? (
-                'Não há registros'
+                <p className="w-2/3 bg-red-400 p-2 text-center">
+                  Não há registros
+                </p>
               ) : (
                 <>
                   <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white text-xs md:text-sm">
