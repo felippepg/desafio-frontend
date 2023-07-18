@@ -150,8 +150,11 @@ function App({ children }) {
           ) : (
             <div className="w-full h-full p-4">
               {transacoes.content.length <= 0 ? (
-                <p className="w-2/3 bg-red-400 p-2 text-center">
-                  Não há registros
+                <p
+                  className="w-2/3 bg-red-400 p-2 text-center cursor-pointer"
+                  onClick={() => window.location.reload()}
+                >
+                  Não há registros, clique aqui para visualizar todos
                 </p>
               ) : (
                 <>
