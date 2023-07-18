@@ -19,6 +19,7 @@ import { formatarDataFinal, formatarDataInicio } from './services/formatarData';
 import { buscaTodasTransacoesPorPeriodo } from './services/buscarTransacoesPorPeriodo';
 import { buscaTodasTransacoesPorNome } from './services/buscarTransacoesPorNome';
 import { buscarTransacoesPorPeriodoENome } from './services/buscarTransacoesPorPeriodoENome';
+import ErrorComponent from './components/ErrorComponent';
 
 dayjs.locale('pt-br');
 
@@ -30,6 +31,7 @@ function App({ children }) {
   const [dataFinal, setDataFinal] = useState(null);
   const [nome, setNome] = useState('');
   const [filtros, setFiltros] = useState({ tipo: null, filtro: false });
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -121,6 +123,7 @@ function App({ children }) {
   }
 
   async function nextPage() {
+    setError(false);
     const nextPageValue = page + 1;
 
     if (nextPageValue < transacoes.totalPages) {
@@ -165,6 +168,8 @@ function App({ children }) {
   }
 
   async function prevPage() {
+    setError(false);
+
     if (page > 0) {
       const prevPageValue = page - 1;
       setPage(prevPageValue);
@@ -208,6 +213,7 @@ function App({ children }) {
 
   async function handleSubmit() {
     if (dataInicio === null && dataFinal === null && nome.trim() === '') {
+      setError(false);
       if (transacoes == undefined || transacoes.content.length === 0) {
         const response = await api.get(`/transacao`);
         setTransacoes(response.data);
@@ -219,8 +225,10 @@ function App({ children }) {
 
     if (dataInicio !== null && dataFinal !== null) {
       if (dataFinal < dataInicio) {
-        console.log('Data final é menor que a data inicial');
+        setError(true);
+        return;
       } else {
+        setError(false);
         setFiltros({ filtro: true, tipo: 'data-periodo' });
         setTransacoes(
           await buscaTodasTransacoesPorPeriodo(
@@ -233,11 +241,13 @@ function App({ children }) {
 
     if (nome.trim().length > 3) {
       if (dataInicio == null && dataFinal == null) {
+        setError(false);
         setFiltros({ filtro: true, tipo: 'nome' });
         setTransacoes(await buscaTodasTransacoesPorNome(nome));
       }
       if (dataInicio !== null && dataFinal !== null) {
         if (dataInicio < dataFinal) {
+          setError(false);
           setFiltros({ filtro: true, tipo: 'data-periodo-nome' });
           setTransacoes(
             await buscarTransacoesPorPeriodoENome(
@@ -255,6 +265,14 @@ function App({ children }) {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       {children}
       <div className="flex flex-col items-center justify-center h-screen w-screen">
+        {error == true ? (
+          <ErrorComponent>
+            {' '}
+            A data inicial não pode ser maior que a final
+          </ErrorComponent>
+        ) : (
+          ''
+        )}
         <div className="bg-white flex flex-col w-3/4 h-3/4">
           <div className="flex flex-col justify-between p-4 md:flex-row">
             <StyledDatePicker
@@ -294,50 +312,47 @@ function App({ children }) {
             </div>
           ) : (
             <div className="w-full h-full p-4">
-              {/* {transacoes.content.length <= 0 ? (
-                <p
-                  className="w-2/3 bg-red-400 p-2 text-center cursor-pointer"
-                  onClick={() => window.location.reload()}
-                >
+              {transacoes.content.length <= 0 ? (
+                <ErrorComponent onClick={() => window.location.reload()}>
                   Não há registros, clique aqui para visualizar todos
-                </p>
-              ) : ( */}
-              <>
-                <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white text-xs md:text-sm">
-                  <span>
-                    Saldo Total: R${' '}
-                    {transacoes !== undefined
-                      ? transacoes.content[0]?.saldoTotal
-                      : ''}
-                  </span>
-                  <span>
-                    Saldo no período $R${' '}
-                    {transacoes !== undefined
-                      ? transacoes.content[0]?.saldoTotalPeriodo
-                      : ''}
-                  </span>
-                </div>
-                <BasicTable transacoes={transacoes} />
-                <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white">
-                  <FirstPageIcon
-                    className="cursor-pointer"
-                    onClick={() => handleFirstPage()}
-                  />
-                  <KeyboardArrowLeft
-                    className="cursor-pointer"
-                    onClick={() => prevPage()}
-                  />
-                  <KeyboardArrowRight
-                    className="cursor-pointer"
-                    onClick={() => nextPage()}
-                  />
-                  <LastPageIcon
-                    className="cursor-pointer"
-                    onClick={() => handleLastPage()}
-                  />
-                </div>
-              </>
-              )
+                </ErrorComponent>
+              ) : (
+                <>
+                  <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white text-xs md:text-sm">
+                    <span>
+                      Saldo Total: R${' '}
+                      {transacoes !== undefined
+                        ? transacoes.content[0]?.saldoTotal
+                        : ''}
+                    </span>
+                    <span>
+                      Saldo no período $R${' '}
+                      {transacoes !== undefined
+                        ? transacoes.content[0]?.saldoTotalPeriodo
+                        : ''}
+                    </span>
+                  </div>
+                  <BasicTable transacoes={transacoes} />
+                  <div className="bg-red-500 w-full flex justify-around h-10 p-1 text-white">
+                    <FirstPageIcon
+                      className="cursor-pointer"
+                      onClick={() => handleFirstPage()}
+                    />
+                    <KeyboardArrowLeft
+                      className="cursor-pointer"
+                      onClick={() => prevPage()}
+                    />
+                    <KeyboardArrowRight
+                      className="cursor-pointer"
+                      onClick={() => nextPage()}
+                    />
+                    <LastPageIcon
+                      className="cursor-pointer"
+                      onClick={() => handleLastPage()}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
