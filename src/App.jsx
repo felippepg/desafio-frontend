@@ -49,30 +49,6 @@ function App({ children }) {
     setTransacoes(response.data);
   }
 
-  // async function nextPage() {
-  //   console.log('1' + transacoes);
-  //   const nextPageValue = page + 1;
-
-  //   if (nextPageValue < transacoes.totalPages) {
-  //     setPage(nextPageValue);
-  //     if (filtros.filtro == false) {
-  //       const response = await api.get(`/transacao?page=${nextPageValue}`);
-  //       setTransacoes(response.data);
-  //     }
-  //     if (filtros.filtro == true && filtros.tipo == 'data-periodo') {
-  //       console.log('2' + transacoes);
-
-  //       const dataInicioFormatada = formatarDataInicio(dataInicio);
-  //       const dataFinalFormatada = formatarDataFinal(dataFinal);
-
-  //       const response = await api.get(
-  //         `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&page=${nextPageValue}`
-  //       );
-  //       console.log(response.data);
-  //       setTransacoes(response);
-  //     }
-  //   }
-  // }
   async function nextPage() {
     const nextPageValue = page + 1;
 
@@ -88,10 +64,13 @@ function App({ children }) {
         const dataInicioFormatada = formatarDataInicio(dataInicio);
         const dataFinalFormatada = formatarDataFinal(dataFinal);
 
-        const response = await api.get(
-          `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&page=${nextPageValue}`
+        setTransacoes(
+          await buscaTodasTransacoesPorPeriodo(
+            dataInicioFormatada,
+            dataFinalFormatada,
+            nextPageValue
+          )
         );
-        setTransacoes(response.data);
       }
     }
   }
@@ -109,11 +88,13 @@ function App({ children }) {
       if (filtros.filtro === true && filtros.tipo === 'data-periodo') {
         const dataInicioFormatada = formatarDataInicio(dataInicio);
         const dataFinalFormatada = formatarDataFinal(dataFinal);
-
-        const response = await api.get(
-          `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&page=${prevPageValue}`
+        setTransacoes(
+          await buscaTodasTransacoesPorPeriodo(
+            dataInicioFormatada,
+            dataFinalFormatada,
+            prevPageValue
+          )
         );
-        setTransacoes(response.data);
       }
     }
   }
@@ -134,17 +115,12 @@ function App({ children }) {
         console.log('Data final é menor que a data inicial');
       } else {
         setFiltros({ filtro: true, tipo: 'data-periodo' });
-        const response = await api.get(
-          `/transacao/periodo-data?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}`
+        setTransacoes(
+          await buscaTodasTransacoesPorPeriodo(
+            dataInicioFormatada,
+            dataFinalFormatada
+          )
         );
-        console.log(response.data);
-        setTransacoes(response.data);
-        // setTransacoes(
-        //   await buscaTodasTransacoesPorPeriodo(
-        //     dataInicioFormatada,
-        //     dataFinalFormatada
-        //   )
-        // );
       }
     }
 
