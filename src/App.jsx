@@ -18,6 +18,7 @@ import Box from '@mui/material/Box';
 import { formatarDataFinal, formatarDataInicio } from './services/formatarData';
 import { buscaTodasTransacoesPorPeriodo } from './services/buscarTransacoesPorPeriodo';
 import { buscaTodasTransacoesPorNome } from './services/buscarTransacoesPorNome';
+import { buscarTransacoesPorPeriodoENome } from './services/buscarTransacoesPorPeriodoENome';
 
 dayjs.locale('pt-br');
 
@@ -33,21 +34,90 @@ function App({ children }) {
   useEffect(() => {
     (async () => {
       setTransacoes(await buscaTodasTransacoes());
-      console.log(transacoes);
     })();
   }, []);
 
   async function handleLastPage() {
-    const response = await api.get(
-      `/transacao?page=${transacoes.totalPages - 1}`
-    );
-    setTransacoes(response.data);
+    if (filtros.filtro === false) {
+      const response = await api.get(
+        `/transacao?page=${transacoes.totalPages - 1}`
+      );
+      setTransacoes(response.data);
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'data-periodo') {
+      const dataInicioFormatada = formatarDataInicio(dataInicio);
+      const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+      setTransacoes(
+        await buscaTodasTransacoesPorPeriodo(
+          dataInicioFormatada,
+          dataFinalFormatada,
+          transacoes.totalPages - 1
+        )
+      );
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'nome') {
+      setTransacoes(
+        await buscaTodasTransacoesPorNome(nome, transacoes.totalPages - 1)
+      );
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'data-periodo-nome') {
+      const dataInicioFormatada = formatarDataInicio(dataInicio);
+      const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+      setTransacoes(
+        await buscarTransacoesPorPeriodoENome(
+          dataInicioFormatada,
+          dataFinalFormatada,
+          nome,
+          transacoes.totalPages - 1
+        )
+      );
+    }
   }
 
   async function handleFirstPage() {
-    setPage(0);
-    const response = await api.get(`/transacao?page=${page}`);
-    setTransacoes(response.data);
+    const firstPage = 0;
+    setPage(firstPage);
+
+    if (filtros.filtro === false) {
+      const response = await api.get(`/transacao?page=${firstPage}`);
+      setTransacoes(response.data);
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'data-periodo') {
+      const dataInicioFormatada = formatarDataInicio(dataInicio);
+      const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+      setTransacoes(
+        await buscaTodasTransacoesPorPeriodo(
+          dataInicioFormatada,
+          dataFinalFormatada,
+          firstPage
+        )
+      );
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'nome') {
+      setTransacoes(await buscaTodasTransacoesPorNome(nome, firstPage));
+    }
+
+    if (filtros.filtro === true && filtros.tipo === 'data-periodo-nome') {
+      const dataInicioFormatada = formatarDataInicio(dataInicio);
+      const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+      setTransacoes(
+        await buscarTransacoesPorPeriodoENome(
+          dataInicioFormatada,
+          dataFinalFormatada,
+          nome,
+          firstPage
+        )
+      );
+    }
   }
 
   async function nextPage() {
@@ -73,6 +143,24 @@ function App({ children }) {
           )
         );
       }
+
+      if (filtros.filtro === true && filtros.tipo === 'nome') {
+        setTransacoes(await buscaTodasTransacoesPorNome(nome, nextPageValue));
+      }
+
+      if (filtros.filtro === true && filtros.tipo === 'data-periodo-nome') {
+        const dataInicioFormatada = formatarDataInicio(dataInicio);
+        const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+        setTransacoes(
+          await buscarTransacoesPorPeriodoENome(
+            dataInicioFormatada,
+            dataFinalFormatada,
+            nome,
+            nextPageValue
+          )
+        );
+      }
     }
   }
 
@@ -93,6 +181,24 @@ function App({ children }) {
           await buscaTodasTransacoesPorPeriodo(
             dataInicioFormatada,
             dataFinalFormatada,
+            prevPageValue
+          )
+        );
+      }
+
+      if (filtros.filtro === true && filtros.tipo === 'nome') {
+        setTransacoes(await buscaTodasTransacoesPorNome(nome, prevPageValue));
+      }
+
+      if (filtros.filtro === true && filtros.tipo === 'data-periodo-nome') {
+        const dataInicioFormatada = formatarDataInicio(dataInicio);
+        const dataFinalFormatada = formatarDataFinal(dataFinal);
+
+        setTransacoes(
+          await buscarTransacoesPorPeriodoENome(
+            dataInicioFormatada,
+            dataFinalFormatada,
+            nome,
             prevPageValue
           )
         );
@@ -133,11 +239,13 @@ function App({ children }) {
       if (dataInicio !== null && dataFinal !== null) {
         if (dataInicio < dataFinal) {
           setFiltros({ filtro: true, tipo: 'data-periodo-nome' });
-          const response = await api.get(
-            `/transacao/periodo-data-operador?data-inicial=${dataInicioFormatada}&data-final=${dataFinalFormatada}&operador=${nome}`
+          setTransacoes(
+            await buscarTransacoesPorPeriodoENome(
+              dataInicioFormatada,
+              dataFinalFormatada,
+              nome
+            )
           );
-          console.log(response.data);
-          setTransacoes(response.data);
         }
       }
     }
